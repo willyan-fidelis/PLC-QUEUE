@@ -1,0 +1,89 @@
+﻿FUNCTION_BLOCK "EL_QUEUE"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+   VAR_INPUT 
+      ParMaxQueueSize : Int;
+   END_VAR
+
+   VAR 
+      CmdAdd : Bool;
+      CmdRemove : Bool;
+      CmdResetQueue : Bool;
+      StAdding : Bool;
+      StRemoving : Bool;
+      StQueueFull : Bool;
+      StQueueEmpty : Bool;
+      StAddPosition : Int;
+      StRemovePosition : Int;
+      StActualQueueSize : Int;
+   END_VAR
+
+
+BEGIN
+	(* Status Fila Cheia: *)
+	IF #StActualQueueSize >= #ParMaxQueueSize THEN
+	    #StQueueFull := TRUE;
+	ELSE
+	    #StQueueFull := FALSE;
+	END_IF;
+	
+	(* Status Adicionando a Fila: *)
+	IF #StAdding THEN
+	    #StAdding := FALSE;
+	    (* Incrementa o ponteiro de adição: *)
+	    IF #StAddPosition >= (#ParMaxQueueSize - 1) THEN
+	        #StAddPosition := 0;
+	    ELSE
+	        #StAddPosition := #StAddPosition + 1;
+	    END_IF;
+	    (* Atualiza o tamanhao atual da fila: *)
+	    #StActualQueueSize := #StActualQueueSize + 1;
+	END_IF;
+	
+	(* Comando Adicionar a Fila: *)
+	IF #CmdAdd THEN
+	    #CmdAdd := FALSE;
+	    (* Se a fila não estiver cheia podemos adionar um novo elemento: *)
+	    IF NOT #StQueueFull THEN
+	        #StAdding := TRUE;
+	    END_IF;
+	END_IF;
+	
+	(* Status Fila Vazia: *)
+	IF #StActualQueueSize = 0 THEN
+	    #StQueueEmpty := TRUE;
+	ELSE
+	    #StQueueEmpty := FALSE;
+	END_IF;
+	
+	(* Status Removendo a Fila: *)
+	IF #StRemoving THEN
+	    #StRemoving := FALSE;
+	    (* Incrementa o ponteiro de remoção: *)
+	    IF #StRemovePosition >= (#ParMaxQueueSize - 1) THEN
+	        #StRemovePosition := 0;
+	    ELSE
+	        #StRemovePosition := #StRemovePosition + 1;
+	    END_IF;
+	    (* Atualiza o tamanhao atual da fila: *)
+	    #StActualQueueSize := #StActualQueueSize - 1;
+	END_IF;
+	
+	(* Comando Remover da Fila: *)
+	IF #CmdRemove THEN
+	    #CmdRemove := FALSE;
+	    (* Se a fila não estiver vazia podemos remover um novo elemento: *)
+	    IF NOT #StQueueEmpty THEN
+	        #StRemoving := TRUE;
+	    END_IF;
+	END_IF;
+	
+	(* Comando Reset Fila: *)
+	IF #CmdResetQueue THEN
+	    #CmdResetQueue := FALSE;
+	    #StAddPosition := 0;
+	    #StRemovePosition := 0;
+	    #StActualQueueSize := 0;
+	END_IF;
+END_FUNCTION_BLOCK
+
